@@ -12,7 +12,7 @@ interface WSWithMeta extends WebSocket {
     clientId: string;
 }
 
-const WORKSPACE_PATH = '/home/prayansh-chhablani/repl/exec/src/test';
+const WORKSPACE_PATH = '/app/workspace';
 const terminalManager = new TerminalManager();
 
 export function initWs(httpServer: HttpServer) {
@@ -81,15 +81,17 @@ async function handleMessage(ws: WSWithMeta, type: string, data: any, callbackId
             break;
         }
         case 'updateContent': {
-            const fullPath = path.join(WORKSPACE_PATH, data.path);
-            await saveFile(fullPath, data.content);
-            const latestContent = await fetchFileContent(fullPath);
-            await sendToSaveServiceUpdate(ws.replId, [
-              {
-                  path: data.path,
-                  content: latestContent,
-              }
-          ]);
+            for (const file of data.files) {
+                const fullPath = path.join(WORKSPACE_PATH, file.path);
+                await saveFile(fullPath, file.content);
+                const latestContent = await fetchFileContent(fullPath);
+                await sendToSaveServiceUpdate(ws.replId, [
+                    {
+                        path: file.path,
+                        content: latestContent,
+                    }
+                ]);
+            }
             break;
         }
         case 'terminalData': {

@@ -5,7 +5,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const BUCKET_NAME = process.env.GCS_BUCKET || 'your-default-bucket-name';
-const storage = new Storage();
+const KEYFILE_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const storage = new Storage({
+  keyFilename: KEYFILE_PATH,
+});
+
 const bucket = storage.bucket(BUCKET_NAME);
 
 export interface FileItem {

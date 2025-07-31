@@ -14,7 +14,7 @@ export class TerminalManager {
         let term = fork(SHELL, [], {
             cols: 100,
             name: 'xterm',
-            cwd: `/home/prayansh-chhablani/repl/exec/src/test`
+            cwd: `/app/workspace`
         });
     
         term.on('data', (data: string) => onData(data, term.pid));

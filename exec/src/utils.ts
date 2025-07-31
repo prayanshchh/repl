@@ -1,6 +1,8 @@
 import axios from 'axios';
 import path from 'path';
 import { createFolder, saveFile } from './fs';
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface FileItem {
     name: string;
@@ -13,10 +15,11 @@ interface FileChange {
     content: string;
   }
   
+const BASE_URL = process.env.SAVE_SERVICE_URL;
 
 export async function fetchInitialFiles(replId: string, language: string): Promise<FileItem[]> {
     try {
-      const response = await axios.get('http://127.0.0.1:4000/initialise', {
+      const response = await axios.get(`${BASE_URL}/initialise`, {
         params: { replId, language }
       });
       return response.data.files;
@@ -35,7 +38,7 @@ export async function sendToSaveServiceUpdate(
     files: FileChange[]
   ): Promise<void> {
     try {
-      const response = await axios.post('http://127.0.0.1:4000/change', {
+      const response = await axios.post(`${BASE_URL}/change`, {
         replId,
         files,
       }, {
