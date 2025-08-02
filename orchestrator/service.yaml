@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service_name
+  labels:
+    app: service_name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service_name
+  template:
+    metadata:
+      labels:
+        app: service_name
+    spec:
+      volumes:
+        - name: workspace-volume
+          emptyDir: {}
+        - name: save-volume
+          emptyDir: {}
+        - name: s3-creds
+          secret:
+            secretName: s3-credentials
+      containers:
+      - name: exec
+        image: prayanshchh/exec-service
+        ports:
+            - containerPort: 3001
+            - containerPort: 3000
+        volumeMounts:
+          - name: workspace-volume
+            mountPath: /workspace   
+        env:
+          - name: SAVE_SERVICE_URL
+            value: "SAVE_SERVICE_URL_PLACEHOLDER" 
+        resources:
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+            ephemeral-storage: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+            ephemeral-storage: "2Gi"
+
+      - name: save
+        image: prayanshchh/save-service
+        
+        ports:
+            - containerPort: 4000
+        volumeMounts:
+          - name: save-volume
+            mountPath: /save-dir 
+          - name: s3-creds
+            mountPath: /creds
+            readOnly: true 
+        env:
+            - name: GCS_BUCKET
+              value: "GCS_BUCKET_PLACEHOLDER"
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/creds/s3-creds.json"
+        resources:
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+            ephemeral-storage: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+            ephemeral-storage: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service_name
+spec:
+  selector:
+    app: service_name
+  ports:
+    - protocol: TCP
+      name: ws
+      port: 3001
+      targetPort: 3001
+    - protocol: TCP
+      name: user
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: service_name
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: service_name.stub.prayanshchhablani.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service_name
+            port:
+              number: 3001
